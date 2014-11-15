@@ -1,0 +1,607 @@
+<html><head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="WeensyOS%20Minilab%201%20-%20CS%20111,%20Summer%202013_files/style.css">
+<title>WeensyOS Minilab 1 - CS 111, Summer 2013</title>
+</head>
+<body>
+
+
+<div class="body">
+
+
+<h2>WeensyOS Minilab 1</h2>
+
+<p class="exercise">Keep in mind that this is individual work only—no groups. (You can share ideas but not code.)
+</p>
+
+<p>The WeensyOS problem sets are a series of little coding exercises that
+are also complete operating systems.
+
+You could boot a WeensyOS operating system on real x86-compatible hardware!
+
+The purpose of the WeensyOS exercises is first, to teach some of the
+concepts we use in class through example, and second, to demystify
+operating systems in general.
+
+I also hope they are fun.</p>
+
+
+<p>The first WeensyOS problem set concerns <i>processes</i>.
+
+The MiniprocOS is a tiny operating system that supports the major process
+primitives: creating a new process with <code>fork</code>, exiting a
+process, and waiting on a process that has exited.
+
+The only thing missing -- and it's a big one -- is process isolation:
+MiniprocOS processes actually share a single address space.  (In a later
+minilab you will implement process isolation for memory.)
+
+In this problem set, you will actually implement the code that forks a
+new process, and see how system calls are implemented.
+
+You will also update the code that waits on an exited process to avoid busy
+waiting.</p>
+
+
+<table border="0" cellpadding="0" cellspacing="0">
+<tbody><tr><td><b><code>weensyos1.tar.gz</code></b>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+    <td>Source code for WeensyOS 1, which builds this hard
+    disk image:</td></tr>
+<tr><td><code>mpos.img</code>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+    <td>MiniprocOS, plus two applications that create and run new processes.</td></tr>
+</tbody></table>
+
+<p>In this simple problem set, you'll browse, partially understand, and
+change this tiny operating system.</p>
+
+
+
+<h3>Handing in</h3>
+
+<p>You will electronically hand in code and a small writeup
+containing answers to the numbered exercises.
+
+The problem set code, <code>weensyos1.tar.gz</code>
+(available on CourseWeb),
+unpacks into a directory called <code>weensyos1</code>.  (We explain how to unpack it
+below.)
+
+You'll modify the code in this directory, and add a text file with your
+answers to the numbered exercises.
+
+When you're done, run the command <code class="type">make tarball</code>.
+
+This should create a file named
+<code>weensyos1-<i>yourusername</i>.tar.gz</code>.
+
+You'll turn in this file to CourseWeb.</p>
+
+<p><b>Answer the numbered exercises</b> by editing the file named
+<code>answers.txt</code>.
+
+<i>No Microsoft Word documents</i> (or other binary format such as PDF) <i>will be accepted!</i>
+
+For coding exercises, it's OK for <code>answers.txt</code> to just refer to
+your code (as long as you comment your code).</p>
+
+
+<p>To review:</p>
+
+<ol>
+<li>Download <code>weensyos1.tar.gz</code> and unpack it.</li>
+<li>Do your work in the <code>weensyos1</code> directory.</li>
+<li>Fill out the
+<code>answers.txt</code> file in that directory.</li>
+<li>When you're done, run <code class="type">make tarball</code> from the <code>weensyos1</code> directory.  This will create a file named <code>weensyos1-<i>yourusername</i>.tar.gz</code>.</li>
+<li>Submit that <code>weensyos1-<i>yourusername</i>.tar.gz</code> file to
+CourseWeb.</li> </ol>
+
+
+
+<h3>Setting up</h3>
+
+<p>You could take one of the disk image files this minilab builds, write it
+to your laptop's hard drive, and boot up your operating system directly if
+you wanted!
+
+However, it's much easier to work with a <i>virtual</i> machine or <i>PC
+emulator</i>.</p>
+
+
+<p>An emulator mimics, or <i>emulates</i>, the behavior of a full hardware
+platform.
+
+A PC emulator acts like a Pentium-class PC: it emulates the
+execution of Intel x86 instructions, and the behavior of other PC
+hardware.  For example, it can treat a normal file in your home directory
+as an emulated hard disk; when the program inside the emulator reads a
+sector from the disk, the emulator simply reads 512 bytes from the file.
+
+PC emulators are much slower than real hardware, since they do all of the
+regular CPU's job in software -- not to mention the disk controller's job,
+the console's job, and so forth.
+
+However, debugging with an emulator is a whole lot friendlier, and you
+can't screw up your machine!</p>
+
+
+<p>We've used two PC emulators.  The <a href="http://bochs.sourceforge.net/"><b>Bochs</b></a> emulator has pretty
+nice debugging support.  The <a href="http://www.qemu.org/"><b>QEMU</b></a> package is fast
+and sleek, but it might be <i>too</i> fast for some of our purposes.
+
+You will also need a copy of GCC that compiles code for an x86 ELF
+target.
+
+<!-- ELF, or Executable and Linkable Format, is a particular format for storing
+machine language programs on disk. -->
+
+Recent Linux PCs have the right compiler already set up.
+
+<!-- However, if you want to work on other platforms, or on Windows, you'll
+need a <i>cross-compiler</i>: a version of GCC that runs on your machine,
+but generates binaries for WeensyOS. --></p>
+
+<p>We strongly recommend that you use the
+<a href="http://read.cs.ucla.edu/111/labsetup">CS 111 Ubuntu Distribution</a>
+if you want to work from home.
+
+We've set up all the required tools on the machines in the Linux lab, and
+the SEASnet Linux servers.  In the Linux lab, no special setup is
+required. <a href="http://www.read.seas.harvard.edu/%7Ekohler/class/07f-osp/tools.html">Here</a> you may find some more information with regard to setting up the right environment.</p>
+
+<p>Now that you've got all the software set up (or you've just decided to
+use the Linux lab), it's time to download WeensyOS and take it out for a
+spin.</p>
+
+<p class="exercise">Unpack the source for weensyos1 using the
+following command.</p>
+
+<!-- <p>If you've never unpacked source code before, don't worry; the process is
+very easy.  Unix source code is distributed in packed files
+informally called <i>tarballs</i>, after the <i>tar</i> (<b>T</b>ape
+<b>AR</b>chive) program that parses the format.  Think of a tarball as a
+Zip archive: a single file that contains compressed versions of a set of
+other files.  Tarballs have the suffix <tt>.tar</tt> or, more frequently,
+<tt>.tar.gz</tt> or <tt>.tgz</tt>.  These latter suffixes indicate that the
+tarball has been <i>compressed</i>.  The GNU <i>tar</i> program knows how
+to uncompress the tarball and extract all its comments.  Here's the
+command:</p> -->
+
+<pre class="samp">% <span class="type">tar xzf weensyos1.tar.gz</span>
+</pre>
+
+<p>(On Linux, you can just say "<span class="type">tar xzf
+weensyos1.tar.gz</span>".)  This should unpack the tarball into the
+<tt>weensyos1</tt> directory.</p>
+
+<pre class="samp">% <span class="type">ls weensyos1</span>
+COPYRIGHT    conf   mergedep.pl   mpos-app2.c  mpos-kern.h      mpos.h
+GNUmakefile  elf.h  mkbootdisk.c  mpos-boot.c  mpos-loader.c    types.h
+answers.txt  lib.c  mpos-app.c    mpos-int.S   mpos-symbols.ld  x86.h
+bootstart.S  lib.h  mpos-app.h    mpos-kern.c  mpos-x86.c
+%
+</pre>
+
+<p>Now that you've unpacked the source, it's time to give the OSes a
+whirl.</p>
+
+<p class="exercise"> Change into the <tt>weensyos1</tt> directory and run
+the <tt class="type">make</tt> program (which must be GNU make).</p>
+
+<!-- <div class='note'><p>The <tt>make</tt> program should work immediately if
+you are doing this lib in the Linux lab, or on your own recent x86
+machine.</p>
+
+<p>You may also log in to the Solaris machines, although this takes a bit
+more work.  Since Bochs puts up a GUI, you must either use a terminal or
+<code class='type'>ssh -X</code>.  Once logged in, simply add the
+<code>/u/cs/class/cs111/cbin/bin</code> directory to your PATH environment
+variable, using one of these commands:</p>
+
+<pre class='samp'>
+# In csh-like shells (this includes the default):
+% <span class='type'>setenv PATH /u/cs/class/cs111/cbin/bin:$PATH</span>
+
+# In bash-like shells (this includes the default):
+$ <span class='type'>export PATH=/u/cs/class/cs111/cbin/bin:$PATH</span>
+</pre>
+</p>
+</div> -->
+
+<!-- <p><tt>make</tt>, in case you haven't heard of it, is one of a family of
+<i><tt>make</tt></i> programs that simplify the process of building
+software projects.
+
+The user writes a set of rules, called a <i>Makefile</i>, that tells the
+<tt>make</tt> program what to build.
+
+For example, a Makefile might say, "to compile a C program, run the
+<tt>gcc</tt> compiler; and by the way, I want to compile the program named
+<tt>hello</tt>, which depends on the C source file <tt>hello.c</tt>".
+
+Makefiles can be quite simple, although most medium-to-large projects have
+complex Makefiles.
+
+You'll be using a couple simple Makefiles in the labs.</p> -->
+
+<p>The WeensyOS <tt>GNUmakefile</tt> builds a hard disk
+image called <tt>mpos.img</tt>, which contains the MiniprocOS "kernel"
+and two applications, <tt>mpos-app.c</tt> and <tt>mpos-app2.c</tt>.</p>
+
+
+<p>Make's output should look something like this:</p>
+
+<pre class="samp">% <span class="type">make</span>
++ hostcc mkbootdisk.c
++ as bootstart.S
++ cc mpos-boot.c
++ ld mpos-bootsector
++ as mpos-int.S
++ cc mpos-kern.c
++ cc mpos-x86.c
++ cc mpos-loader.c
++ cc lib.c
++ cc mpos-app.c
++ ld mpos-app
++ cc mpos-app2.c
++ ld mpos-app2
++ ld mpos-kern
++ mk mpos.img
+%
+</pre>
+
+<p>Now that you've built the OS disk image, it's time to run it!  We've
+made it very easy to boot a given disk image; just run this command:</p>
+
+<pre class="samp">% <span class="type">make run-mpos</span>
+</pre>
+
+<p>This will start up Bochs.  After a moment you should see a window like
+this!</p>
+
+<img src="WeensyOS%20Minilab%201%20-%20CS%20111,%20Summer%202013_files/fig-mpos0.gif" alt="[MiniprocOS]" align="middle" border="1">
+
+<p>Hit "<code>1</code>" to try to run the first application, and you should see a window like this:</p>
+
+<img src="WeensyOS%20Minilab%201%20-%20CS%20111,%20Summer%202013_files/fig-mpos1.gif" alt="[MiniprocOS]" align="middle" border="1">
+
+<p>To quit Bochs, click the "Power" button in the upper-right corner.
+(Very funny, Bochs.)</p>
+
+<p><b>QEMU Note.</b> If you're running QEMU instead of Bochs, run the
+MiniprocOS with <span class="type">qemu -hda mpos.img</span>.  (The
+<code>-hda</code> option stands for Hard Disk A.)  QEMU doesn't have a
+funky power button; just hit Control-C in the terminal to quit.  QEMU will
+sometimes "grab" the keyboard, which prevents you from doing anything else.
+If you appear to have lost control of your computer, check QEMU's title
+bar: it may say something like "Press Ctrl-Alt to exit grab".  Press
+Ctrl-Alt and things should return to normal.</p>
+
+
+<h3>MiniprocOS Application</h3>
+
+<p>You're now ready to start learning about the OS code!</p>
+
+<p>Start first with the application, <tt>mpos-app.c</tt>.  This
+application simply starts a single child process and waits for it to exit.
+It uses system calls that implement the process functions we discussed in
+class: <tt>fork</tt> starts a new process;
+<tt>exit</tt> exits a process; and <tt>wait</tt> returns a process's exit
+status.</p>
+
+<p class="exercise">Read and understand the code in
+<tt>mpos-app.c</tt>.</p>
+
+
+<p>How are those system calls implemented?
+
+As discussed in class, to call a system call, the application program
+executes a <i>trap</i>: an instruction that initiates a protected control
+transfer to the kernel.
+
+The system call's arguments are often stored in machine registers, and
+that's how MiniprocOS does it.
+
+Likewise, the system call's results are often returned in a machine
+register.
+
+On Intel 80386-compatible machines (colloquially called "x86es"), the
+interrupt instruction is called <code>int</code>, and registers have names
+like <code>%eax</code>, <code>%ebx</code>, and so forth.
+
+A special C language statement, called <code>asm</code>, can execute the
+interrupt instruction and connect register values with C-language
+variables.</p>
+
+
+<p class="exercise">Read and understand the comments in
+<tt>mpos-app.h</tt>.
+
+This file defines MiniprocOS's system calls.
+
+Also glance through the code, to see how system calls actually work!</p>
+
+
+<p>The MiniprocOS <i>kernel</i> handles these system calls.</p>
+
+<p class="note">
+
+This kernel is different from conventional operating system kernels in
+several ways, mostly to keep the kernel as small as possible.
+
+For one thing, the kernel shares an address space with user applications,
+so that user applications could write over the kernel if they wanted to.
+
+This isn't very <i>robust</i>, since the kernel is not isolated from user
+faults, but for now it is easier to keep everything in the same address
+space.
+
+Another difference is that MiniprocOS implements <i>cooperative
+multitasking</i>, rather than <i>preemptive multitasking</i>.
+
+That is, processes give up control <i>voluntarily</i>, and if a process went
+into an infinite loop, the machine would entirely stop.
+
+In preemptive multitasking, the kernel can <em>preempt</em> an
+uncooperative process, which forces it to give up control.
+
+Preemptive multitasking is more robust than cooperative multitasking,
+meaning it's more resilient to errors, but it is slightly more complex.
+All modern PC-class operating systems use preemptive multitasking for
+user-level applications, but the kernel itself usually switches between
+internal tasks using cooperative multitasking.</p>
+
+
+<p>MiniprocOS's main kernel structures are as follows.</p>
+
+<dl>
+
+<dt><b><code>struct process_t</code></b></dt>
+<dd>This is the <i>process descriptor</i> structure, which stores all the
+relevant information for each process.  It is defined in
+<tt>mpos-kern.h</tt>.</dd>
+
+<dt><b><code>process_t miniproc[];</code></b></dt>
+<dd>This is an array of process descriptor structures, one for each possible
+process.  MiniprocOS supports up to 15 concurrent processes, with process IDs 1
+to 15.  The process descriptor for process <i><code>I</code></i> is stored in
+<code>miniproc[<i>I</i>]</code>.  Initially, only one of these processes is
+active, namely <code>miniproc[1]</code>.  The <code>miniproc[0]</code> entry
+is never used.</dd>
+
+<dt><b><code>process_t *current;</code></b></dt>
+<dd>This points to the process descriptor for the currently running
+process.</dd>
+
+</dl>
+
+<p>The code in <tt>mpos-kern.c</tt> sets up these structures.  In
+particular, the <code>start()</code> function initializes all the process
+descriptors.</p>
+
+<p class="exercise">Read and understand the code and comments in
+<tt>mpos-kern.h</tt>.  Then read and understand the memory map in
+<tt>mpos-kern.c</tt>, the picture at the top that explains how MiniprocOS's
+memory is laid out.  Then look at <code>start()</code>.</p>
+
+
+<p>The code you'll be changing in MiniprocOS is the function that responds to
+system calls.  This function is called <code>interrupt()</code>.</p>
+
+<p class="exercise">Read and understand the code for
+<code>interrupt()</code> in <tt>mpos-kern.c</tt>.  Concentrate on the
+simplest system call, namely <code>sys_getpid/INT_SYS_GETPID</code>.
+Understand how the <code>sys_getpid</code> application function (in
+<tt>mpos-app.h</tt>) and the <code>INT_SYS_GETPID</code> clause in
+<code>interrupt()</code> (in <tt>mpos-kern.c</tt>) interact.</p>
+
+
+<p class="exercise"><b>Exercise 1.</b> Answer the following question: Say
+you replaced <code>run(current)</code> in the
+<code>INT_SYS_GETPID</code> clause with <code>schedule()</code>.
+The process that called <code>sys_getpid()</code> will eventually run
+again, picking up its execution as if <code>sys_getpid()</code> had returned
+directly.  When it does run, will the <code>sys_getpid()</code> call have
+returned the correct value?</p>
+
+
+<p>You may have noticed, though, that the <code>sys_fork()</code>
+system call isn't working!  Your job is to write the code that actually
+creates a new process.</p>
+
+
+<p class="exercise"><b>Exercise 2.</b> Fill out the <code>do_fork()</code>
+and <code>copy_stack()</code> functions in <tt>mpos-kern.c</tt>.</p>
+
+
+<p>Congratulations, you've written code to create a process -- it's not
+that hard, no?  (Our version is less than 20 lines of code.)  Here's what
+you should see when you're done:</p>
+
+
+<img src="WeensyOS%20Minilab%201%20-%20CS%20111,%20Summer%202013_files/fig-mpos2.gif" alt="[MiniprocOS after Exercise 2]" align="middle">
+
+
+<p>Now take a look at the code in <code>mpos-app.c</code> that calls
+<code>sys_wait()</code>.  Also look at the <code>INT_SYS_WAIT</code>
+implementation in <code>mpos-kern.c</code>.  The current system call design
+uses a <em>polling</em> approach: to wait for process 2 to exit, a process
+must call <code>sys_wait(2)</code> over and over again until process 2
+exits and the <code>sys_wait(2)</code> system call returns a value
+different from <code>WAIT_TRYAGAIN</code>.</p>
+
+<p>We'll see more about polling later in the quarter, but for now, notice
+that polling approaches like this often reduce <em>utilization</em>.  A
+process uses CPU time to call <code>sys_wait(2)</code> over and over again,
+leaving less CPU time for others.  An alternative approach, which can
+improve utilization, is called <em>blocking</em>.  A blocking
+implementation would put <code>sys_wait(2)</code>'s caller to sleep, then
+wake it up once process 2 had exited and a real exit status was available.
+The sleeping process doesn't use any CPU.  A process that is asleep because
+the kernel is waiting for some event is called <em>blocked</em>.</p>
+
+<div class="exercise"><b>Exercise 3.</b> Change the implementation of
+<code>INT_SYS_WAIT</code> in <code>mpos-kern.c</code> to use blocking
+instead of polling.  In particular, when the caller tries to wait on a
+process that has not yet exited, that process should block until the
+process actually exits.
+
+<p></p>
+
+<strong>Important Hint:</strong> Make sure that your blocking version of
+<code>sys_wait()</code> has <em>exactly the same</em> user-visible behavior
+as the original version, except that it blocks and so never returns
+<code>-2</code>.  See <code>mpos-app.h</code> for an English description of
+the current behavior.
+</div>
+
+<p>To implement Exercise 3, you will probably want to add a field to the
+process descriptor structure.
+
+This field will indicate whether or not a process is waiting on another
+process.
+
+You will change <code>INT_SYS_WAIT</code> to add the calling process to
+this "wait queue", and <code>INT_SYS_EXIT</code> to wake any processes
+that were on the "wait queue".
+
+There are several ways to do this; describe how you did it in
+<tt>answers.txt</tt>.</p>
+
+<p>To check your work, try changing the <code>sys_wait()</code> loop in
+<code>mpos-app.c</code> to look like this:
+
+</p><pre class="samp">		do {
+			status = sys_wait(p);
+			<strong>app_printf("W");</strong>
+		} while (status == WAIT_TRYAGAIN);
+</pre>
+
+<p>A polling implementation of <code>sys_wait</code> would produce output
+like this:</p>
+
+<img src="WeensyOS%20Minilab%201%20-%20CS%20111,%20Summer%202013_files/fig-mpos2a.gif" alt="[MiniprocOS 2 before Exercise 3]" align="middle">
+
+<p>You want it to produce output like this:</p>
+
+<img src="WeensyOS%20Minilab%201%20-%20CS%20111,%20Summer%202013_files/fig-mpos2b.gif" alt="[MiniprocOS 2 after Exercise 3]" align="middle">
+
+
+<h3>Cleaning Up Processes</h3>
+
+<p>Now try running the other MiniprocOS application.  You should see
+something like this (different processes generally print their lines in
+different colors):</p>
+
+
+<img src="WeensyOS%20Minilab%201%20-%20CS%20111,%20Summer%202013_files/fig-mpos3.gif" alt="[MiniprocOS 2 after Exercise 3]" align="middle">
+
+
+<p>The MiniprocOS2 application, in <code>mpos-app2.c</code>, tries to run
+1024 child processes.</p>
+
+<p class="exercise">Read and understand <code>mpos-app2.c</code>.</p>
+
+<p>Unfortunately, your current kernel code doesn't seem able to run more
+than 15 total processes, ever!
+
+It looks like old, dead processes aren't being cleaned up, even after we call
+<code>sys_wait()</code> on them.
+
+This is what we call a bug.</p>
+
+
+<p class="exercise"><b>Exercise 4.</b> Find and fix this bug.</p>
+
+
+<p>When you've completed this exercise, the application should count up to
+1024, like this:</p>
+
+
+<img src="WeensyOS%20Minilab%201%20-%20CS%20111,%20Summer%202013_files/fig-mpos4.gif" alt="[MiniprocOS 2 after Exercise 4]" align="middle">
+
+
+<p>Your colors may differ, however, depending on how you implement
+<code>sys_wait()</code>.  One common implementation strategy ends with
+several red lines in a row.  If you see this in your code, try to figure
+out why!</p>
+
+
+<p><b>This completes the minilab.</b> But here are some extra credit
+opportunities, if you're interested.</p>
+
+
+<div class="exercise"><b>Extra-Credit Exercise 5.</b> Our version of
+<code>sys_fork()</code>, with its dirt simple stack copying strategy, works
+only for simple programs.  For example, consider the following function
+definition:
+
+<pre class="samp">void start(void) {
+        int x = 0;  /* note that local variable x lives on the stack */
+        /* YOUR CODE HERE */
+        pid_t p = sys_fork();
+        if (p == 0)
+                /* YOUR CODE HERE */;
+        else if (p &gt; 0)
+                sys_wait(p); // assume blocking implementation
+        app_printf("%d", x);
+        sys_exit(0);
+}
+</pre>
+
+In a system with true process isolation, the child process's <code>x</code>
+and the parent process's <code>x</code> would be different variables, and
+changes in one process would not affect the other's <code>x</code>.  But in
+MiniprocOS, this is not always the case!  For this exercise, produce a
+version of that code with the following properties:
+
+<ol>
+<li>The code uses only local variables.</li>
+<li>In a system with correct process isolation, the code would print
+"<code>10</code>".</li>
+<li>In MiniprocOS, the code would print "<code>11</code>".</li>
+</ol>
+
+<strong>Hint:</strong> It isn't easy to get this to work because the
+compiler tends to optimize away important assignment statements or shift
+them to unfortunate places.  Mark a variable as <code>volatile</code> to
+tell the compiler not to optimize references to it.  Doing this correctly
+is tricky, but if you can understand the difference between <code>volatile
+int *x</code> and <code>int * volatile x</code> you can do this problem.
+</div>
+
+<p></p>
+
+<div class="exercise"><b>Extra-Credit Exercise 6.</b> MiniprocOS
+miniprocesses have some aspects of threads.  For instance, like threads,
+they all share a single address space.  A big difference from threads is
+that we create a new process by forking.  New threads are created in a
+different way.  Introduce a new system call,
+
+<pre class="samp">pid_t sys_newthread(void (*start_function)(void));
+</pre>
+
+that creates a new process in a thread-like way.  The new process should
+start with an <em>empty</em> stack, not a copy of the current stack.
+Rather than starting at the same instruction as the parent, the new thread
+should start by executing the <code>start_function</code> function: that
+is, that function's address becomes the new thread's instruction
+pointer.</div>
+
+<p class="exercise"><b>Extra-Credit Exercise 7.</b> Introduce a
+<code>sys_kill(<i>pid</i>)</code> system call by which one process can make
+another process exit.  Use this system call to alter <tt>mpos-app2.c</tt>'s
+<code>run_child()</code> function so that the even-numbered processes kill
+off all odd-numbered processes (except for thread 1).  Running the
+application should print out "<tt>Process N lives</tt>" messages only for
+even-numbered values of <tt>N</tt>.</p>
+
+</div>
+
+<hr>
+<address>
+ © 2013 <a href="http://www.cs.ucla.edu/classes/spring13/cs111/copyright.html">copyright rules</a>
+</address>
+
+
+</body></html>

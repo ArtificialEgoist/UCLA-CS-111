@@ -1,0 +1,77 @@
+# Fill in your name, student ID, and email address in this file.
+# If you are working in a team, fill out the information for both team 
+# members.
+
+# SUBMIT THE LAB ONLY ONCE (from only one partner). This file will be
+# automatically parsed in order to give both team members credit for the
+# lab.
+
+# You need to fill in the EXERCISE sections describing your solutions
+# for Tasks 1, 2, and 3, as well as write the corresponding code.
+# If you did one or more extra credit problems, indicate which one in the
+# appropriate section below (remove the # sign first). If you have any other
+# information you'd like us to know, please add it at the end of the file.
+
+# Partner 1
+Name: Nathan Tung
+Student ID: 004059195
+Email: nathanctung@ucla.edu
+
+# Partner 2 (if you're working in a team)
+Name: Arun Joseph
+Student ID: 804004769
+Email: ajoseps@gmail.com
+
+# EXERCISE 1: What method you used to make your peer download and upload
+#    files in parallel?  (~1-3 sentences)
+
+We used forking in main() in order to create child processes that would download or upload concurrently.
+The parent process is responsible only for calling fork() to generate new children processes.
+It doesn't do any downloading/uploading itself.
+
+# EXERCISE 2A: What conditions did you find and fix that would have
+#    triggered a buffer overrun bug?  (~1-3 sentences each)
+
+It appears that strcpy is notorious for causing buffer overflows when there is no null terminator
+and we try to copy over more than its max length, FILENAMESIZ. 
+We replaced strcpy with strncpy, forcing us to specify the max length of the buffers to copy over
+(FILENAMESIZ), and we also made sure that the last bit in the buffer is a null terminator. 
+We found two instances in which strcpy posed an error in terms of buffer overflows; they are found
+in the functions start_download() and task_download().
+
+# EXERCISE 2B: What other robustness problems did you fix?  (~1-3 sentences
+#    each)
+
+1. In task_upload(), prevent peer from uploading files outside of current directory..
+	We assume that a '/' character indicates the file is not in current directory,
+	so we look through the filename buffer. If we find a '/' character, set a boolean
+	value that is checked immediately before transferring file; exit if the file is
+	from another directory.
+
+2.	In order to prevent an indefinite file transfer, we need to limit the maximum size for a file
+	that is to be downloaded. For example, we set the max size to 128 MB (#define MAXDOWNLOAD 134217728)
+	and check inside task_download() that the file follows our standard. Otherwise, we won't download it.
+	
+3. To increase peer robustness, we can increase the defined buffer size (#define TASKBUFSIZ 73728)
+	such that we continue to run our tasks even when many peers are simultaneously logged in.
+	(This way, the trackers can reduce peer downtime.)
+
+# EXERCISE 3: Describe the attacks you implemented for "evil mode".  Why
+#    are they attacks?  (~3-10 sentences each)
+
+1. The first attack we implemented is precisely what we tried to fix earlier for ourselves: buffer overflow.
+	As we can see in osp2p.h, the function osp2p_writef() allows multiple parameters that can get written.
+	If evil mode is on during task_download(), we try to write 4 times the normal file name into the other
+	peer's buffer. If it succeeded, we use a goto statement and keep cycling back to repeat the process.
+	Once it's effectively filled with junk, we move on to other peers that have the download.
+	
+2. The next attack we'll perform will occur during task_upload(). We will continually feed the peer 
+	data (whether junk or not) to hold them up using a loop. The peer should not be able to advance in
+	receiving the uploaded file. Alternatively, during upload, we could simply bypass the check for serving
+	files in current directory.	This way, we could send the user a malicious file or something otherwise undesired.
+	Notice how the attacks we are implementing are mostly the security flaws we handled above.
+
+# Extra credit problems
+# Extra credit problem: none
+
+# Add any other information you'd like us to know below this line.

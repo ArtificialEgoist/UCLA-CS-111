@@ -1,0 +1,50 @@
+Name: Nathan Tung
+UCLA ID: 004-059-195
+
+
+-------------------------------------------------------------------------------
+
+Response to Exercise 1: 
+The name of the scheduling algorithm is: Round-Robin Scheduling
+We know this because of the scheduling's distinct nature that prevents starvation.
+Every process gets a little done at a time, making it a more fair option of scheduling.
+
+
+(Exercise 2 is a coding exercise)
+Please see the code comments for details. I used a variable with processes called p_priority to track scheduling order.
+The lower the int, the higher the priority. Processes alternate when priorities are equal.
+
+
+Response to Exercise 3:
+
+Average turnaround time for scheduling_algorithm 0: 1.5 ms + (4(320 ms) + 4(320 ms) + 4(320 ms) + 4(320 ms))/4 = 1281.5 ms
+Average turnaround time for scheduling_algorithm 1: 480 ms + (320 ms + 320 ms + 320 ms + 320 ms)/4 = 800 ms
+
+Average wait time for scheduling_algorithm 0: (0 ms + 1 ms + 2 ms + 3 ms)/4 = 1.5 ms
+Average wait time for scheduling_algorithm 1: (0 ms + 320 ms + 640 ms + 960 ms)/4 = 480 ms
+
+
+Exercise 4:
+
+Did you complete Exercise 4A or Exercise 4B? I completed both.
+Their corresponding system calls are also implemented in the code but not currently used.
+Please see the code comments for details.
+
+
+Exercise 5:
+The first known timer interrupt occurs at process 4. The result was 12341234123412341231...
+Notice that the last process 4 does not get run. What should have been process 4 skipped into process 1.
+
+
+(Exercise 6 is a coding exercise)
+Please see the code comments for details.
+I implemented a system call that encompasses the cursorpos and char printing within a single atomic action.
+
+
+Anything else you'd like us to know:
+
+Exercise 7:
+Please see the code comments for details. This scheduling_algorithm is defined as 4. 
+The implementation is based off of an NPROC-sized array which cumulatively holds the number of lottery tickets that process holds.
+Then we use a pseudo-random number generator (linear-feedback shift register from Wikipedia) seeded with the system time.
+The system time is grabbed using the system call code that Tuan provided.

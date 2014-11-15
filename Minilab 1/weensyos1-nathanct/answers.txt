@@ -1,0 +1,25 @@
+Name: Nathan Tung
+UCLA ID: 004-059-195
+
+
+-------------------------------------------------------------------------------
+
+Response to Exercise 1:
+Even if run(current) is replaced with schedule(), which runs all runnable processes in a loop (but doesn't run the current process at first), sys_getpid() should still produce the same correct value. This is because the expected pid is stored in the eax register meant for system call results, and schedule() does nothing to modify this register.
+
+In other words, it should return the (same) correct value.
+
+
+Anything else you'd like us to know:
+The other exercises are done through coding.
+
+In Exercise 2, I basically for-looped from the last to first index in the array, finding the first index apart from 0 (if any) that is empty. If no empty indices are found, we quit. Otherwise, we set the child's registers to the parent's, reset the eax register, copy over stack values via another method, update the stack pointer and stack boundaries, and finally set the child process to RUNNABLE.
+
+Exercise 3 involved adding a p_waiting_pid to the process_t struct. It is an int that represents the pid of the process that is being held up by this current (child) process being run. We utilize this to resume the parent after the child finishes. INT_SYS_WAIT was not modified very much. Rather than continually pumping out the WAIT_TRYAGAIN value, we set the current process to BLOCKED and tell the new running process the pid of the process that was halted.
+
+Similarly, Exercise 4 requires only a slight modification. In INT_SYS_WAIT, if we find a process to be ZOMBIE, then we help it exit and set it to EMPTY. In INT_SYS_EXIT, we help a process reach ZOMBIE state, then if it has another process waiting for it to end, we set that process to RUNNABLE.
+
+*More details can be found in the code and comments.    
+
+Extra credit exercises:
+No extra credit problems done thus far
